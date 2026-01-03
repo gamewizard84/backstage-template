@@ -1,0 +1,49 @@
+apiVersion: scaffolder.backstage.io/v1beta3
+kind: Template
+metadata:
+  name: hello-world-demo
+  title: Hello World Node.js App
+  description: A simple template for kind cluster testing
+spec:
+  owner: guest
+  type: service
+
+  # 1. This defines the input form in the Backstage UI
+  parameters:
+    - title: Basic Information
+      required:
+        - name
+      properties:
+        name:
+          title: App Name
+          type: string
+          description: Unique name for your new app
+        description:
+          title: Description
+          type: string
+
+  # 2. These are the steps the backend executes
+  steps:
+    - id: fetch-base
+      name: Fetch Skeleton
+      action: fetch:template
+      input:
+        url: ./skeleton  # Points to the local folder
+        values:
+          name: ${{ parameters.name }}
+          description: ${{ parameters.description }}
+
+    - id: publish
+      name: Publish to GitHub
+      action: publish:github
+      input:
+        allowedHosts: ['github.com']
+        description: This is ${{ parameters.name }}
+        repoUrl: github.com?owner=your-github-user&repo=${{ parameters.name }}
+
+    - id: register
+      name: Register in Catalog
+      action: catalog:register
+      input:
+        repoContentsUrl: ${{ steps['publish'].output.repoContentsUrl }}
+        catalogInfoPath: '/catalog-info.yaml'
